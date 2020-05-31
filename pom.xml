@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <!--
@@ -15,6 +15,7 @@
     </parent>
 
     <artifactId>hapi-fhir-jpaserver-starter</artifactId>
+    <version>4.1.0-Custom-SNAPSHOT</version>
 
     <prerequisites>
         <maven>3.5.0</maven>
@@ -35,6 +36,12 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.11</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.2.9</version>
         </dependency>
 
         <!-- Needed for Email subscriptions -->
@@ -59,14 +66,14 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-base</artifactId>
-            <version>${project.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <!-- This dependency includes the JPA server itself, which is packaged separately from the rest of HAPI FHIR -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-jpaserver-base</artifactId>
-            <version>${project.version}</version>
+            <version>${project.parent.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework</groupId>
@@ -83,14 +90,14 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-testpage-overlay</artifactId>
-            <version>${project.version}</version>
+            <version>${project.parent.version}</version>
             <type>war</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-testpage-overlay</artifactId>
-            <version>${project.version}</version>
+            <version>${project.parent.version}</version>
             <classifier>classes</classifier>
             <scope>provided</scope>
         </dependency>
@@ -213,8 +220,8 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
             <scope>test</scope>
-			</dependency>
-			<!--
+        </dependency>
+        <!--
         <dependency>
             <groupId>com.helger</groupId>
             <artifactId>ph-schematron</artifactId>
@@ -239,7 +246,7 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-test-utilities</artifactId>
-            <version>${project.version}</version>
+            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -299,6 +306,7 @@
                             <Build-Time>${maven.build.timestamp}</Build-Time>
                         </manifestEntries>
                     </archive>
+					<attachClasses>true</attachClasses>
                     <overlays>
                         <overlay>
                             <groupId>ca.uhn.hapi.fhir</groupId>
@@ -309,7 +317,11 @@
                 </configuration>
             </plugin>
 
-            <!-- This is to run the integration tests -->
+            <!-- This is to run the integration tests 
+				 Skip integration tests as advised on https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration
+				 Failure to skip or delete the tests once you've configured PostgreSQL for the datasource.driver, 
+				 datasource.url, and hibernate.dialect as outlined above will result in build errors and compilation failure.
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -325,7 +337,8 @@
                     </execution>
                 </executions>
             </plugin>
-
+			-->
+			
             <plugin>
                 <groupId>org.basepom.maven</groupId>
                 <artifactId>duplicate-finder-maven-plugin</artifactId>
@@ -418,7 +431,6 @@
                     </ignoredResourcePatterns>
                 </configuration>
             </plugin>
-
 
         </plugins>
     </build>

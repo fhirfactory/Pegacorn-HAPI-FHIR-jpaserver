@@ -1,0 +1,4 @@
+---
+name: pegacorn-hapi-fhir-jpaserver
+version: 4.1.0-custom-snapshot
+description: Customisations to https://github.com/hapifhir/hapi-fhir-jpaserver-starter to allow it to run on wildfly and to use postgresql as the backing database

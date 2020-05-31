@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:jboss:deployment-structure:1.2 
+		http://www.jboss.org/schema/jbossas/jboss-deployment-structure-1_2.xsd">
+
+	<!-- From
+		 1. https://groups.google.com/forum/#!msg/hapi-fhir/8hY1p44hArc/FUc6Eq1JEAAJ
+		 2. https://github.com/CMSgov/bluebutton-data-server/blob/master/bluebutton-server-app/src/main/webapp/WEB-INF/jboss-deployment-structure.xml
+	 -->
+
+	<!-- This file can be used to control which subsystems WildFly makes available 
+		to this application. Documented here: https://docs.wildfly.org/16/Developer_Guide.html#jboss-deployment-structure-file -->
+
+	<!-- This corresponds to the top level deployment. For a war this is the 
+		war's module, for an ear, this is the top level ear module, which contains 
+		all the classes in the EAR's lib folder -->
+	<deployment>
+		<!-- exclude-subsystem prevents a subsystems deployment unit processors 
+			running on a deployment, which gives basically the same effect as removing 
+			the subsystem, but it only affects single deployment -->
+		<exclude-subsystems>
+
+			<!-- These WildFly subsystems would otherwise conflict with the JARs baked 
+				in to this WAR (e.g. Hibernate). The list of available subsystems can be 
+				found here: https://docs.wildfly.org/16/Admin_Guide.html#configuration-2. 
+				Note that WildFly doesn't activate all of its subsystems by default; instead, 
+				the subsystems are enabled only for those applications that meet certain 
+				conditions: https://docs.wildfly.org/16/Developer_Guide.html#Implicit_module_dependencies_for_deployments -->
+			<subsystem name="jpa" />
+			<subsystem name="weld" />
+
+			<!-- This is needed to work around the problems caused by Hibernate 5 
+				including a later version of the jboss-logging library than Wildfly 8 includes 
+				or supports. Without this, we get the following errors at deployment: "java.lang.NoSuchMethodError: 
+				org.jboss.logging.Logger.debugf". -->
+			<!-- subsystem name="logging" / -->
+
+		</exclude-subsystems>
+
+		<!-- Exclusions allow you to prevent the server from automatically adding 
+			some dependencies. -->
+		<exclusions>
+
+			<!-- Disabled per http://stackoverflow.com/a/22187710/1851299, as otherwise 
+				we get errors like the following when deploying on Wildfly/JBoss: "NoSuchMethodError: 
+				com.fasterxml.jackson.databind.ObjectMapper.disable(...)". -->
+			<module name="org.jboss.resteasy.resteasy-jackson2-provider" />
+
+			<!-- Disabled per https://stackoverflow.com/questions/50948980/same-application-showing-different-behavior-on-two-different-machine-jboss-eap-7, to fix
+			class com.fasterxml.jackson.datatype.jdk8.Jdk8Module cannot be cast to class com.fasterxml.jackson.databind.Module
+			-->
+            <module name="com.fasterxml.jackson.core.jackson-core" />
+            <module name="com.fasterxml.jackson.core.jackson-annotations" />
+            <module name="com.fasterxml.jackson.core.jackson-databind" />
+            <module name="com.fasterxml.jackson.datatype.jackson-datatype-jdk8" />
+            <module name="com.fasterxml.jackson.datatype.jackson-datatype-jsr310" />
+            <module name="com.fasterxml.jackson.jaxrs.jackson-jaxrs-json-provider" />
+            <module name="org.jboss.resteasy.resteasy-jackson-provider" />
+		</exclusions>
+	</deployment>
+
+</jboss-deployment-structure>

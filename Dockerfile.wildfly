@@ -1,0 +1,33 @@
+FROM jboss/wildfly:18.0.1.Final
+#FROM wildflyext/wildfly-camel:10.2.0
+
+# From https://forums.docker.com/t/how-can-i-view-the-dockerfile-in-an-image/5687/3
+# the ConatinerConfig.Cmd in the output of the command > docker inspect wildflyext/wildfly-camel was
+# CMD ["/usr/libexec/s2i/run"], but to use the embedded ActiveMQ Artemis and to 
+# support jBPM/KIE Server we need to start in full mode as mentioned on:
+# https://www.codelikethewind.org/2017/08/08/how-to-embed-a-jbpm-process-in-a-java-ee-application/
+# http://www.mastertheboss.com/jboss-jbpm/jbpm6/running-rules-on-wildfly-with-kie-server
+# https://github.com/jboss-dockerfiles/drools/blob/master/kie-server/showcase/etc/start_kie-server.sh
+# so followed the example of https://github.com/jemella/microbpm-fabric8/blob/master/microbpm-kie-server/src/main/docker/Dockerfile
+# and swapped the config files, so if the server is manually restarted from the command line the default
+# configuration is for the full-ha mode:
+RUN mv $JBOSS_HOME/standalone/configuration/standalone.xml $JBOSS_HOME/standalone/configuration/standalone.xml.orig && \
+    cp $JBOSS_HOME/standalone/configuration/standalone-full-ha.xml $JBOSS_HOME/standalone/configuration/standalone.xml
+
+# deploy the application
+COPY target/*.war $JBOSS_HOME/standalone/deployments/
+
+COPY setup-env-then-start-wildfly-as-jboss.sh /
+COPY start-wildfly.sh /
+
+USER root
+# Install gosu based on
+# 1. https://gist.github.com/rafaeltuelho/6b29827a9337f06160a9
+# 2. https://github.com/tianon/gosu
+# 3. https://github.com/tianon/gosu/releases/download/1.12/gosu-amd64
+COPY gosu-amd64 /usr/local/bin/gosu
+RUN chmod +x /usr/local/bin/gosu && \
+	chmod +x /setup-env-then-start-wildfly-as-jboss.sh && \
+   	chmod +x /start-wildfly.sh
+
+CMD	["/setup-env-then-start-wildfly-as-jboss.sh"]

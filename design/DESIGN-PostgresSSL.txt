@@ -1,0 +1,37 @@
+Postgres SSL implementation for Fhirplace and Hapi Fhir Jpa Server
+==================================================================
+
+Aim
+===
+To set up a secure Postgres instance configured for SSL certificate authentication and avoid the use of passwords for database access by Pegacorn services. 
+The scenario is a Kubernetes persistent volume hosting a database of sensitive data (Fhirplace) with client interaction limited to the Hapi Fhir Jpa Server 
+service and only via certificate authentication.
+
+Changes
+=======
+
+Allow references to certificates files to be updated as the container was starting up, sourced from a volume. This allows a the docker image to be a template 
+that can then use specific certificates for each container;
+
+Update the Docker container to include deployment of certificates into /etc/certs/ssl and to include ssl parameters on the JDBC connection to postgres. 
+Note the certificate files are read only and owned by the jboss user.
+
+Configuration and startup
+=========================
+C:
+cd \dev\pegacorn-hapi-fhir-jpaserver
+docker build --rm -t pegacorn/pegacorn-hapi-fhir-jpaserver:4.1.0-custom-snapshot --file Dockerfile.wildfly .
+
+helm upgrade pegacorn-fhirplace-gateway-site-a --install --namespace site-a --set serviceName="pegacorn-fhirplace-gateway",nodeAffinityLabel=fhirplace,basePort=30002,imageTag=4.1.0-custom-snapshot,dataSourceServiceName=pegacorn-fhirplace,dataSourcePortAndDBName="30000/hapi",hostPathCerts=/data/certificates,dbUser=pegacorn,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,wildflyAdminUser=admin,wildflyAdminPwd=Admin123 helm
+
+helm upgrade pegacorn-hestia-gateway-site-a --install --namespace site-a --set serviceName="pegacorn-hestia-gateway",nodeAffinityLabel=hestia,basePort=30012,imageTag=4.1.0-custom-snapshot,dataSourceServiceName=pegacorn-hestia,dataSourcePortAndDBName="30010/hapi",hostPathCerts=/data/certificates,dbUser=pegacorn,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,wildflyAdminUser=admin,wildflyAdminPwd=Admin123 helm
+
+Tests
+=====
+
+In a browser view:
+1. FHIRPlace: http://localhost:30002/hapi-fhir-jpaserver/search?serverId=home&pretty=true&resource=Patient&param.0.qualifier=&param.0.0=&param.0.name=_language&param.0.type=string&sort_by=&sort_direction=&resource-search-limit=
+2. Hestia Dam: http://localhost:30012/hapi-fhir-jpaserver/search?serverId=home&pretty=true&resource=Patient&param.0.qualifier=&param.0.0=&param.0.name=_language&param.0.type=string&sort_by=&sort_direction=&resource-search-limit=
+
+To confirm that SSL connections were being used, the JDBC traffic from calling hapi-fhir-jpaserver code was captured with tcpdump and analyzed with wireshark, which reported that TLS v1.2 encryption was being used.
+
