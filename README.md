@@ -8,7 +8,7 @@ The following certificates need to be provided to the docker image via a host vo
 1. $HAPI_DATASOURCE_USER.pk8 - the private key of the user to connect to the postgres database with.  As detailed on https://jdbc.postgresql.org/documentation/head/connect.html this must be in PKCS-8 DER format.
 2. $HAPI_DATASOURCE_USER.cer - client certificate of the user to connect to the postgres database with
 3. ca.cer - the Certificate Authority certificate chain to trust
-The certificates can be created by following [How to create certificates](https://github.com/fhirfactory/pegacorn-postgresql#how-to-create-certificates).  If you are using Docker for Windows, the instructions at the following link can be used to [Copy the host-files to the DockerDesktop VM](https://github.com/fhirfactory/pegacorn-postgresql#how-to-create-certificates).
+The certificates can be created by following [How to create certificates](https://github.com/fhirfactory/pegacorn-postgresql#how-to-create-certificates).  If you are using Docker for Windows, the instructions at the following link can be used to [Copy the host-files to the DockerDesktop VM](https://github.com/fhirfactory/pegacorn-postgresql#copy-the-host-files-to-the-dockerdesktop-vm).
 
 # To create the docker image
 ```
@@ -36,6 +36,7 @@ helm upgrade pegacorn-hestia-gateway-site-a --install --namespace site-a --set s
 
 # To test everything is working
 View http://localhost:30002/hapi-fhir-jpaserver/resource?serverId=home&pretty=false&resource=Patient
+
 Click on the CRUD Operations button and Create with JSON:
 ```
 {
