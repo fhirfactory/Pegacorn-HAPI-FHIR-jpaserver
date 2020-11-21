@@ -1,0 +1,8 @@
+---
+serviceName: pegacorn-hapi-fhir-jpaserver
+basePort: 10011
+imageTag: latest #snapshot-191129-125903-0664
+dataSourceHostPortAndDBName: pegacorn-fhirplace.site-a:15823/hapi
+
+#\helm\helm upgrade pegacorn-hestia-gateway-site-a --install --namespace site-a --set serviceName="pegacorn-hestia-gateway",basePort=10011,imageTag=1.0,dataSourceHostPortAndDBName="pegacorn-hestia-dam.site-a:15833/hapi" helm
+

@@ -1,0 +1,102 @@
+Secure hapi fhir jpa server by adding client certificate authentication using two way mutual SSL
+================================================================================================
+
+Aim
+===
+To require all calling clients of hapi fhir jpa server to be authentictaed.  The most secure authentication uses a SSL certificate (instead of a user id/name) 
+that is password protected.
+
+Changes
+=======
+
+Based on https://girirajsharma.wordpress.com/2015/10/04/authentication-via-wildfly-mutual-ssl-two-way-configuration/, but mainly reusing parts of the 
+pegacorn-authorisation solution.
+
+aether-host-files
+=================
+Create truststores for each hapi-fhir-jpaserver instance which contain:
+1. The Certificate Authority chains for all calling clients
+2. The Public certificates for all calling clients
+
+e.g.
+Create-Cert-Set -certSubject 'pegacorn-fhirplace-gateway.site-a' -certPwd 'Peg@cornK3yFG' -createKeystore $True -truststorePwd 'Peg@cornTrustSt0reFG'
+Create-Cert-Set -certSubject 'pegacorn-hestia-gateway.site-a' -certPwd 'Peg@cornK3yHG' -createKeystore $True -truststorePwd 'Peg@cornTrustSt0reHG'
+Create-Cert-Set -certSubject 'pegacorn-ladon.site-a' -certPwd 'Peg@cornK3yLA' -createKeystore $True -truststorePwd 'Peg@cornTrustSt0reLA'
+
+# Use the public cert keystore for pegacorn-ladon as the truststore for pegacorn-fhirplace-gateway, as that is the only allowed caller 
+cp pegacorn-ladon.site-a-cert.jks pegacorn-fhirplace-gateway.site-a-truststore.jks
+cp pegacorn-ladon.site-a-cert.jks pegacorn-hestia-gateway.site-a-truststore.jks
+# If there are additional callers they would be added with
+keytool -import -keystore pegacorn-fhirplace-gateway.site-a-truststore.jks -file pegacorn-{other-caller}.site-a.cer -alias pegacorn-{other-caller}.site-a -storepass 'Peg@cornTrustSt0reLA' -noprompt
+
+
+pegacorn-hapi-fhir-jpaserver
+============================
+
+In cli/ssl-configuration.cli add a new realm that 
+1. refrences the keystore, which holds the CA chain, public cert and private key for this server
+2. references the truststore, which holds the CA chain and public cert for all allowed calling clients
+3. requires clients to authenticate with their certificates/private key
+
+/core-service=management/security-realm=ssl-realm:add()
+/core-service=management/security-realm=ssl-realm/server-identity=ssl:add(keystore-path=/var/lib/pegacorn-keystores/keystore.jks,keystore-password=${env.KEY_PASSWORD}, key-password=${env.KEY_PASSWORD})
+/core-service=management/security-realm=ssl-realm/authentication=truststore:add(keystore-path=/var/lib/pegacorn-keystores/truststore.jks,keystore-password=${env.TRUSTSTORE_PASSWORD})
+
+/subsystem=undertow/server=default-server/https-listener=https:remove()
+/subsystem=undertow/server=default-server/https-listener=https:add(security-realm=ssl-realm,verify-client=REQUIRED,socket-binding=https)
+
+
+In setup-env-then-start-wildfly-as-jboss.sh
+Change the truststore that is copied from the common truststore.jks (that just has the CA chain in it) to be the hapi fhir instance specific truststore (e.g. $KUBERNETES_SERVICE_NAME.$MY_POD_NAMESPACE-truststore.jks), that has the CA chain and public cert for all allowed calling clients
+
+
+secrets
+=======
+Edits to the relevant existing Kubernetes secrets to use the specific trustsrore:
+kubectl delete secret pegacorn-fhirplace-gateway-secrets -n site-a
+kubectl delete secret pegacorn-hestia-gateway-secrets -n site-a
+
+kubectl create secret generic pegacorn-fhirplace-gateway-secrets --from-literal=keyPassword="Peg@cornK3yFG" --from-literal=truststorePassword="Peg@cornTrustSt0reLA" --from-literal=dbUserKeyPassword="Peg@corn" --namespace=site-a
+
+kubectl create secret generic pegacorn-hestia-gateway-secrets --from-literal=keyPassword="Peg@cornK3yHG" --from-literal=truststorePassword="Peg@cornTrustSt0reLA" --from-literal=dbUserKeyPassword="Peg@corn" --namespace=site-a
+
+Testing/Deployment (Local Workstation)
+======================================
+Testing was performed on local development workstation running Fhirplace+gateway, hestia+gateway, ladon.
+
+1. Deploy the new truststores to the local Docker Desktop VM
+docker container run --rm -it -v /:/host alpine
+> chroot /host
+> cp -r /host_mnt/e/dev/aether-host-files/LocalWorkstations/certificates/* /data/certificates
+> exit
+
+2. Build and redeploy the pegacorn-hapi-fhir-jpaserver instances
+cd \dev\pegacorn-hapi-fhir-jpaserver
+docker build --rm -t pegacorn/pegacorn-hapi-fhir-jpaserver:4.1.0-custom-snapshot --file Dockerfile.wildfly .
+
+\helm\helm upgrade pegacorn-fhirplace-gateway-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-gateway,nodeAffinityLabel=fhirplace,basePort=30502,imageTag=4.1.0-custom-snapshot,dataSourceServiceName=pegacorn-fhirplace,dataSourcePortAndDBName="30500/hapi",hostPathCerts=/data/certificates,dbUser=pegacorn,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n helm
+
+\helm\helm upgrade pegacorn-hestia-gateway-site-a --install --namespace site-a --set serviceName=pegacorn-hestia-gateway,nodeAffinityLabel=hestia,basePort=30302,imageTag=4.1.0-custom-snapshot,dataSourceServiceName=pegacorn-hestia-dam,dataSourcePortAndDBName="30300/hapi",hostPathCerts=/data/certificates,dbUser=pegacorn,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n helm
+
+3. Open Chrome and view https://pegacorn-fhirplace-gateway.site-a:30502/hapi-fhir-jpaserver/search?serverId=home&pretty=true&resource=Patient&param.0.qualifier=&param.0.0=&param.0.name=_language&param.0.type=string&sort_by=&sort_direction=&resource-search-limit= and confirm that is now requires a client ssl certificate
+
+4. If you haven't imported the pegacorn-ladon.site-a private key into your Personal User certificates previously, then:
+    * Using Cortana search in Windows 10, type "certificate" until you see the "Manage **user** certificates" option and open it
+    * In the left panel, navigate to Certificates - Current User → Personal → Certificates
+    * If the technologyone certificate doesn't exist, right-click the Certificates folder and click All Tasks, then click Import.
+    * Follow the on-screen wizard instructions to import E:\dev\aether-host-files\LocalWorkstations\certificates\pegacorn-ladon.site-a.pfx into the store, entering the Peg@cornTrustSt0reLA password when prompted.
+
+5. In Chrome, refresh/view https://pegacorn-fhirplace-gateway.site-a:30502/hapi-fhir-jpaserver/search?serverId=home&pretty=true&resource=Patient&param.0.qualifier=&param.0.0=&param.0.name=_language&param.0.type=string&sort_by=&sort_direction=&resource-search-limit=
+
+6. When prompted, select the pegacorn-ladon.site-a private key
+
+7. Confirm the page is now successfully shown
+
+8. Repeat the above for hestia-gateway: 
+
+Issues on Local Workstation
+===========================
+
+Caching of keystore information
+===============================
+The Docker Desktop VM appeared to be caching keystore files or information, refreshing these via the data/certificates directory did not have any effect, and generated "keystore may have been tampered with" errors. Restarting Docker Desktop cleared this problem. It is unknown whether this will present problems in DEV/TEST if keystore files are updated. This was only an issue on the dev workstation due to having to recreate all certificates, not just the pk8 files.

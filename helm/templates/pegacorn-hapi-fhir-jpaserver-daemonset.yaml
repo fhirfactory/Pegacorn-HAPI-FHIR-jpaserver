@@ -46,10 +46,32 @@ spec:
                 - "Yes"
       containers:
       - env:
-        - name: HAPI_DATASOURCE_URL
-          value: "jdbc:postgresql://{{ .Values.dataSourceServiceName }}.{{ .Release.Namespace }}:{{ .Values.dataSourcePortAndDBName }}?ssl=true&sslmode=verify-full&sslcert=/etc/ssl/certs/{{ .Values.dbUser }}.cer&sslkey=/etc/ssl/certs/{{ .Values.dbUser }}.pk8&sslrootcert=/etc/ssl/certs/pegacorn-ca.cer"
+        - name: HAPI_SERVER_ADDRESS
+          value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/hapi-fhir-jpaserver/fhir/"
+        - name: HAPI_API_KEY
+          valueFrom:
+           secretKeyRef:
+            name: hapi-fhir-secrets
+            key: hapiApiKey
+        - name: TRUSTSTORE_PASSWORD
+          valueFrom:
+           secretKeyRef:
+            name: {{ .Values.serviceName }}-secrets
+            key: truststorePassword
+        - name: KEY_PASSWORD
+          valueFrom:
+           secretKeyRef:
+            name: {{ .Values.serviceName }}-secrets
+            key: keyPassword
+        - name: DB_USER_KEY_PASSWORD
+          valueFrom:
+           secretKeyRef:
+            name: {{ .Values.serviceName }}-secrets
+            key: dbUserKeyPassword            
         - name: DATASOURCE_SERVICE_NAME
           value: {{ .Values.dataSourceServiceName }}
+        - name: DATASOURCE_PORT_AND_DBNAME
+          value: {{ .Values.dataSourcePortAndDBName }}          
         - name: HAPI_DATASOURCE_USER
           value: {{ .Values.dbUser }}
         {{- if (.Values.wildflyAdminUser) }} 
@@ -61,6 +83,8 @@ spec:
         {{- end }}
         - name: WILDFLY_LOG_LEVEL
           value: "{{ .Values.wildflyLogLevel | default "WARN" }}"
+        - name: JAVAX_NET_DEBUG
+          value: "{{ .Values.javaxNetDebug | default "none" }}"
         - name: WILDFLY_ENABLE_DEBUG
           value: "{{ .Values.wildflyEnableDebug | default "no" }}"
         - name: KUBERNETES_SERVICE_NAME
@@ -107,19 +131,19 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 9990
-            scheme: HTTP
+            port: 9993
+            scheme: HTTPS
           initialDelaySeconds: 30
         name: wildfly
         ports:
-        - containerPort: 8080
+        - containerPort: 8443
           {{- if (.Values.hostPort) }} 
           hostPort: {{ .Values.hostPort }}
           {{- end }}
-          name: http
+          name: https
           protocol: TCP
         {{- if (.Values.wildflyAdminUser) }} 
-        - containerPort: 9990
+        - containerPort: 9993
           name: admin
           protocol: TCP
         {{- end }}
@@ -137,8 +161,8 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
-            port: 9990
-            scheme: HTTP
+            port: 9993
+            scheme: HTTPS
           initialDelaySeconds: 10
         securityContext:
           privileged: false

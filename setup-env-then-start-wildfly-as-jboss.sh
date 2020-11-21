@@ -22,6 +22,17 @@ chown jboss:jboss /etc/ssl/certs/pegacorn-ca.cer
 
 ls -la /etc/ssl/certs/
 
+mkdir -p /var/lib/pegacorn-keystores
+cp /var/lib/pegacorn-ssl-certs/$KUBERNETES_SERVICE_NAME.$MY_POD_NAMESPACE.jks /var/lib/pegacorn-keystores/keystore.jks
+cp /var/lib/pegacorn-ssl-certs/$KUBERNETES_SERVICE_NAME.$MY_POD_NAMESPACE-truststore.jks /var/lib/pegacorn-keystores/truststore.jks
+
+chmod 400 /var/lib/pegacorn-keystores/keystore.jks
+chown jboss:jboss /var/lib/pegacorn-keystores/keystore.jks 
+chmod 400 /var/lib/pegacorn-keystores/truststore.jks
+chown jboss:jboss /var/lib/pegacorn-keystores/truststore.jks 
+
+ls -la /var/lib/pegacorn-keystores/
+
 # As we are connecting to postgres on the same host as hapi-fhir, add the host file entry mapping to the dynamically assigned
 # IP address of the host, so verify-full ssl mode can be used (otherwise only verify-ca ssl mode could be used as the hostname
 # in the JDBC connecting string would be the host IP which wouldn't match the subject common name of the server certificate 
@@ -30,6 +41,8 @@ echo "Adding hosts entry to /etc/hosts $MY_HOST_IP $DATASOURCE_SERVICE_NAME.$MY_
 
 echo "$MY_HOST_IP $DATASOURCE_SERVICE_NAME.$MY_POD_NAMESPACE" >> /etc/hosts
 cat /etc/hosts
+
+export HAPI_DATASOURCE_URL="jdbc:postgresql://${DATASOURCE_SERVICE_NAME}.${MY_POD_NAMESPACE}:${DATASOURCE_PORT_AND_DBNAME}?ssl=true&sslmode=verify-full&sslcert=/etc/ssl/certs/${HAPI_DATASOURCE_USER}.cer&sslkey=/etc/ssl/certs/${HAPI_DATASOURCE_USER}.pk8&sslrootcert=/etc/ssl/certs/pegacorn-ca.cer&sslpassword=${DB_USER_KEY_PASSWORD}"
 
 # then start /start-wildfly.sh script as jboss user
 # NOTE: gosu is used instead of su-exec as the wildfly docker image is based on centos, whereas the postgres one is based on alpine,

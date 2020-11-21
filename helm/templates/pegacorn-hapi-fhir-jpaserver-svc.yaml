@@ -5,7 +5,7 @@ metadata:
   annotations:
     {{- if (.Values.dnsEntry) }} 
     # From https://docs.microsoft.com/en-us/azure/aks/internal-lb#create-an-internal-load-balancer
-    service.beta.kubernetes.io/azure-load-balancer-internal: "{{ .Values.loadBalancerInternal }}"
+    service.beta.kubernetes.io/azure-load-balancer-internal: "{{ .Values.loadBalancerInternal | default true }}"
 #    service.beta.kubernetes.io/azure-dns-label-name: {{ .Values.dnsEntry }}
     # From https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/rfc2136.md
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.dnsEntry }}
@@ -23,13 +23,13 @@ spec:
   - name: copycat
     port: {{ .Values.basePort }}
     protocol: TCP
-    targetPort: 8080
+    targetPort: 8443
     nodePort: {{ if (.Values.serviceType) and (eq .Values.serviceType "NodePort")}} {{ .Values.basePort }} {{ end }}
   {{- if (.Values.wildflyAdminUser) }} 
   - name: copycat-admin
     port: {{ add 1 .Values.basePort }}
     protocol: TCP
-    targetPort: 9990
+    targetPort: 9993
     nodePort: {{ if (.Values.serviceType) and (eq .Values.serviceType "NodePort")}} {{ add 1 .Values.basePort }} {{ end }}
   {{- end }}
   {{- if (.Values.wildflyEnableDebug) and (eq .Values.wildflyEnableDebug "Yes") }} 

@@ -22,6 +22,18 @@ fi
 #From https://stackoverflow.com/a/54775864
 wildfly_runner+=( -Djboss.tx.node.id="${MY_POD_NAME/$KUBERNETES_SERVICE_NAME/}" )
 
+if [ -n "$JAVAX_NET_DEBUG" ] && [ "$JAVAX_NET_DEBUG" != 'none' ]; then
+    wildfly_runner+=( -Djavax.net.debug=$JAVAX_NET_DEBUG )
+fi
+
+#From https://stackoverflow.com/questions/55112904/mutual-tls-on-apache-camel
+wildfly_runner+=( -Djavax.net.ssl.keyStore="/var/lib/pegacorn-keystores/keystore.jks" )
+wildfly_runner+=( -Djavax.net.ssl.keyStorePassword="${KEY_PASSWORD}" )
+
+#From https://stackoverflow.com/questions/48521776/wildfly-11-use-certificate-to-make-https-requests
+wildfly_runner+=( -Djavax.net.ssl.trustStore="/var/lib/pegacorn-keystores/truststore.jks" )
+wildfly_runner+=( -Djavax.net.ssl.trustStorePassword="${TRUSTSTORE_PASSWORD}" )
+
 if [ -n "$JVM_MAX_HEAP_SIZE" ]; then
     sed -i "s+Xms64m -Xmx512m+Xms$JVM_MAX_HEAP_SIZE -Xmx$JVM_MAX_HEAP_SIZE+g" /opt/jboss/wildfly/bin/standalone.conf
     sed -i "s+MaxMetaspaceSize=256m+MaxMetaspaceSize=$JVM_MAX_HEAP_SIZE+g" /opt/jboss/wildfly/bin/standalone.conf

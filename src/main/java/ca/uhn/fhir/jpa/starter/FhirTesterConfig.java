@@ -44,6 +44,7 @@ public class FhirTesterConfig {
 				.withBaseUrl(HapiProperties.getServerAddress())
 				.withName(HapiProperties.getServerName());
 		retVal.setRefuseToFetchThirdPartyUrls(HapiProperties.getTesterConfigRefustToFetchThirdPartyUrls());
+		retVal.setClientFactory(new ApiKeyClientFactory(JpaRestfulServer.API_KEY_HEADER_NAME));
 		return retVal;
 	}
 

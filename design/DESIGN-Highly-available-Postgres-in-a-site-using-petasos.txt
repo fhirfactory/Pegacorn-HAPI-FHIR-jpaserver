@@ -1,13 +1,13 @@
 Highly available postgres in a site using petasos
 =================================================
 
-In each site where a database is required (currently site-a and site-b for fhirplace), 
+In each site where a database is required (currently site-a and site-b for fhirplace, all 3 sites ? confirm with Mark for hestia (which is used by petasos)), 
 there will be at least one 100GB persistent storage disk attached to a VM (the VMs are denoted by a Kubernetes node label e.g. fhirplace=Yes or hestia=Yes).  
 For each Kubernetes node that has the label, a single pegacorn-postgres pod will be deployed to it by the Kubernetes DaemonSet (which ensures that only 1 pod 
 is deployed to each labelled node) e.g. fhirplace, hestia-dam.  
 
-The pegacorn-postgres pod accesses the persistent storage disk via a hostPath e.g. /kube-vols/fhirplace/data which is a sub folder of the disk mount 
-e.g. /kube-vols/fhirplace.  In case there are more than 1 instances of a given database in a site (for increased redundancy, the benefit is if we are down to just
+The pegacorn-postgres pod accesses the persistent storage disk via a hostPath e.g. /data/fhirplace/data which is a sub folder of the disk mount 
+e.g. /data/fhirplace.  In case there are more than 1 instances of a given database in a site (for increased redundancy, the benefit is if we are down to just
 one site, even if one of the nodes hosting the database goes down, the other node(s) hosting the database can continue), another Kubernetes DaemonSet of
 the Java code persisting to postgres is required to ensure that if a given instance of the Java persistence code is called on a given node, it will
 persist using the postgres instance on that node.  In the case of fhirplace, it is the hapi-fhir-jpaserver that is the Java code persisting.  Petasos will be

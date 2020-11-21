@@ -1,0 +1,193 @@
+Addition of a passphrase to pk8 key files
+=========================================
+
+Aim
+===
+To encrypt the pk8 key file used for client connections to the Postgres servers.
+
+Changes
+=======
+
+aether-host-files
+=================
+All .pk8 files in aether-host-files/DEV/certificates were recreated and encrypted with a passphrase.
+All .pk8 files in aether-host-files/TEST/certificates were recreated and encrypted with a passphrase.
+All certificate files in aether-host-files/LocalWorkstation/certificates were recreated and pk8 files encrypted with a passphrase.
+
+pegacorn-authorisation
+======================
+The deployment YAML was altered to expose the passphrase secret as an environment variable, the following entry was added:
+- name: DB_USER_KEY_PASSWORD
+  valueFrom:
+   secretKeyRef:
+    name: {{ .Values.serviceName }}-secrets
+    key: dbUserKeyPassword
+
+The database CLI configuration was altered to add the DB_USER_KEY_PASSWORD environment variable to the JDBC URL via the sslpassword parameter.
+
+pegacorn-hapi-fhir-jpaserver
+=============================
+The deployment YAML was altered to expose the passphrase secret as an environment variable, the following entry was added:
+- name: DB_USER_KEY_PASSWORD
+  valueFrom:
+   secretKeyRef:
+    name: {{ .Values.serviceName }}-secrets
+    key: dbUserKeyPassword
+
+The JDBC URL was moved from the YAML into the setup-env-and-then-start-wildfly-as-jboss.sh script
+The DB_USER_KEY_PASSWORD environment variable added to the JDBC URL via the sslpassword parameter.
+
+secrets
+=======
+Edits to the relevant existing Kubernetes secrets were made to add the dbUserKeyPassword:
+kubectl delete secret pegacorn-fhirplace-gateway-secrets -n site-a
+kubectl delete secret pegacorn-hestia-gateway-secrets -n site-a
+kubectl delete secret pegacorn-authorisation-secrets -n site-a
+
+kubectl create secret generic pegacorn-fhirplace-gateway-secrets --from-literal=keyPassword="Peg@cornK3yFG" --from-literal=truststorePassword="Peg@cornTrustSt0re" --from-literal=dbUserKeyPassword="Peg@corn" --namespace=site-a
+kubectl create secret generic pegacorn-hestia-gateway-secrets --from-literal=keyPassword="Peg@cornK3yHG" --from-literal=truststorePassword="Peg@cornTrustSt0re" --from-literal=dbUserKeyPassword="Peg@corn" --namespace=site-a
+kubectl create secret generic pegacorn-authorisation-secrets --from-literal=keyPassword="Peg@cornK3y" --from-literal=truststorePassword="Peg@cornTrustSt0reFB" --from-literal=dbUserKeyPassword="Auth@uth" --namespace=site-a
+
+Testing/Deployment (Local Workstation)
+======================================
+Testing was performed on local development workstation running Fhirplace+gateway, hestia+gateway, authorisation/fhirbreak.
+
+As a starting point for testing ensure the above services are running successfully on the dev workstation using existing certificates.
+
+On the *existing* certificates you are using (NOT the new ones in master as they have a different signature), recreate the pk8 file with a passphrase. Do this by:
+1. opening Powershell as administrator 
+2. cd /dev/aether-host-files/LocalWorkstations/certificates dir (or the location of the certificates being used for the currently running local services)
+3. back up the existing .pk8 files e.g. cp pegacorn.pk8 pegacorn.pk8.bak
+4. add the following function to Powershell:
+
+function AddPassphraseToPK8LocalWorkstation() {
+    Param(
+        [Parameter(Mandatory=$true)][String]$certSubject,
+        [Parameter(Mandatory=$true)][String]$certPwd
+    )
+
+    openssl pkcs12 -export -out ($certSubject + ".pfx") -inkey ($certSubject + ".key") -in ($certSubject + ".cer") -certfile ca.cer -passin ("pass:" + $certPwd) -passout ("pass:" + $certPwd)
+ 
+    openssl pkcs12 -in ($certSubject + ".pfx") -nocerts -out ($certSubject + ".pem") -nodes -passin ("pass:" + $certPwd)
+
+    openssl pkcs8 -topk8 -inform PEM -in ($certSubject + ".pem") -outform DER -out ($certSubject + ".pk8") -v1 PBE-MD5-DES -passin ("pass:" + $certPwd) -passout ("pass:" + $certPwd)
+
+    rm ($certSubject + ".pem")
+}
+
+5. for the pegacorn and auth services create a new pk8 file with a passphrase, using Powershell:
+rm *.pk8
+AddPassphraseToPK8LocalWorkstation -certSubject 'pegacorn' -certPwd 'Peg@corn'
+AddPassphraseToPK8LocalWorkstation -certSubject 'arke' -certPwd 'Arke@rk3'
+AddPassphraseToPK8LocalWorkstation -certSubject 'auth' -certPwd 'Auth@uth'
+
+6. Deploy the new pk8 certificates to the local Docker Desktop VM
+docker container run --rm -it -v /:/host alpine
+> chroot /host
+> cp -r /host_mnt/e/dev/aether-host-files/LocalWorkstations/*.pk8 /data/certificates
+> exit
+
+7. Scale the gateway and authorisation pods to zero, then up again, so they restart and pick up the new certificates
+
+8. When the pods have restarted, check the logs for the gateway and authorisation pods e.g.
+kubectl get pod
+kubectl logs <pod name> > log.txt
+
+There will be messages to indicate no password has been provided e.g.:
+started without sslpassword parameter being specified as a parameter in the JDBC connection:
+ERROR [org.hibernate.engine.jdbc.spi.SqlExceptionHelper] (ServerService Thread Pool -- 93) Cannot create PoolableConnectionFactory (Could not read password for SSL key file, console is not available.)
+Caused by: java.sql.SQLException: Cannot create PoolableConnectionFactory (Could not read password for SSL key file, console is not available.)
+Caused by: org.postgresql.util.PSQLException: Could not read password for SSL key file, console is not available.
+
+9. Add the dbUserKeyPassword to the existing pegacorn-fhirplace-gateway-secrets, pegacorn-hestia-gateway-secrets and pegacorn-authorisation-secrets as described earlier.
+
+10. Set the dbUserKeyPassword in the secrets to be incorrect values:
+kubectl delete secret pegacorn-fhirplace-gateway-secrets -n site-a
+kubectl delete secret pegacorn-hestia-gateway-secrets -n site-a
+kubectl delete secret pegacorn-authorisation-secrets -n site-a
+
+kubectl create secret generic pegacorn-fhirplace-gateway-secrets --from-literal=keyPassword="Peg@cornK3yFG" --from-literal=truststorePassword="Peg@cornTrustSt0re" --from-literal=dbUserKeyPassword="Peg@cornWrong" --namespace=site-a
+kubectl create secret generic pegacorn-hestia-gateway-secrets --from-literal=keyPassword="Peg@cornK3yHG" --from-literal=truststorePassword="Peg@cornTrustSt0re" --from-literal=dbUserKeyPassword="Peg@cornWrong" --namespace=site-a
+kubectl create secret generic pegacorn-authorisation-secrets --from-literal=keyPassword="Peg@cornK3y" --from-literal=truststorePassword="Peg@cornTrustSt0reFB" --from-literal=dbUserKeyPassword="Auth@uthWrong" --namespace=site-a
+
+11. Rebuild the gateway and authorisation Docker images and redeploy them
+
+12. The passphrase is now being set and used in the updated services, however the passphrase will not match that of the pk8 certificates generated earlier. Check the logs for the gateway and authorisation services to see errors indicating the wrong passphrase was used:
+ERROR [org.hibernate.engine.jdbc.spi.SqlExceptionHelper] (ServerService Thread Pool -- 94) Cannot create PoolableConnectionFactory (Could not decrypt SSL key file /etc/ssl/certs/pegacorn.pk8.)
+Caused by: java.sql.SQLException: Cannot create PoolableConnectionFactory (Could not decrypt SSL key file /etc/ssl/certs/pegacorn.pk8.)
+Caused by: org.postgresql.util.PSQLException: Could not decrypt SSL key file /etc/ssl/certs/pegacorn.pk8.
+Caused by: java.security.spec.InvalidKeySpecException: Cannot retrieve the PKCS8EncodedKeySpec
+Caused by: javax.crypto.BadPaddingException: Given final block not properly padded. Such issues can arise if a bad key is used during decryption.
+FATAL [org.keycloak.services] (ServerService Thread Pool -- 70) java.lang.RuntimeException: Failed to connect to database
+
+13. Update the secrets so the dbUserKeyPassword values are correct
+
+14. Scale the gateway and authorisation pods to zero, then up again, so they restart and pick up the new secrets
+
+15. Confirm there are no database connection errors in the log and the Wiki links which interact with the services should work fine.
+
+
+Deployment to DEV/TEST Environments
+===================================
+1. New Docker images will need to be built which contain the changes to the JDBC URLs and ensure to deploy using the updated pegacorn-hapi-fhir-jpaserver and pegacorn-authorisation deployment files.
+2. Add the dbUserKeyPassword to the existing pegacorn-fhirplace-gateway-secrets, pegacorn-hestia-gateway-secrets and pegacorn-authorisation-secrets as described earlier.
+3. Redeploy the pk8 certificates
+4. Redeploy the gateway and authorisation services
+
+Note that to create the pk8 files for DEV and TEST a slightly different function was used, as the .pfx files did not need to be created as they already existed in the repository. The function was:
+
+function AddPassphraseToPK8() {
+    Param(
+        [Parameter(Mandatory=$true)][String]$certSubject,
+        [Parameter(Mandatory=$true)][String]$certPwd
+    )
+
+    openssl pkcs12 -in ($certSubject + ".pfx") -nocerts -out ($certSubject + ".pem") -nodes -passin ("pass:" + $certPwd)
+
+    openssl pkcs8 -topk8 -inform PEM -in ($certSubject + ".pem") -outform DER -out ($certSubject + ".pk8") -v1 PBE-MD5-DES -passin ("pass:" + $certPwd) -passout ("pass:" + $certPwd)
+
+    rm ($certSubject + ".pem")
+}
+
+and invoked as follows:
+DEV:
+rm *.pk8
+AddPassphraseToPK8 -certSubject 'pegacorn' -certPwd 'Peg@corn'
+AddPassphraseToPK8 -certSubject 'auth' -certPwd 'Auth@uth'
+AddPassphraseToPK8 -certSubject 'arke' -certPwd 'Arke@rk3'
+
+TEST:
+Similar commands to the those above but with the certPwd for the TEST env
+
+Issues on Local Workstation
+===========================
+Certificate creation
+====================
+The existing LocalWorkstation ca.cer file in the aether-hosts-file repository does not contain private key information and so new certificates are unable to be signed. For this reason, a whole new set of certificates was created and a ca.pfx file exported as well as a ca.cer. The ca.pfx should be imported into the dev workstation certificate store rather than ca.cer, as this then allows the certificates to be shared among the developers and allows them to create new ones as needed. The existing Powershell commands on the Wiki for creating a self-signed root certificate were slightly modified to export both a ca.pfx file as well as a ca.cer file:
+
+$rootcert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -DnsName "localhostRootCA" -TextExtension @("2.5.29.19={text}CA=true") -NotAfter (Get-Date).AddYears(10) -KeyUsage CertSign,CrlSign,DigitalSignature
+[String]$rootCertPath = Join-Path -Path 'cert:\LocalMachine\My\' -ChildPath "$($rootcert.Thumbprint)"
+$certPassword = ConvertTo-SecureString -String 'Peg@corn' -Force –AsPlainText
+Export-PfxCertificate -Cert $rootCertPath -FilePath 'ca.pfx' -Password $certPassword
+Export-Certificate -Cert $rootCertPath -FilePath 'ca.crt'
+certutil -encode ca.crt ca.cer
+rm ca.crt
+
+Certificates were created using the Create-Cert-Set function as described on the Wiki.
+
+The kind of errors which occurred without the private key information are:
+New-SelfSignedCertificate : CertEnroll::CSignerCertificate::Initialize: The certificate does not have a property that
+references a private key. 0x8009200a (-2146885622 CRYPT_E_UNEXPECTED_MSG_TYPE)
+
+New-SelfSignedCertificate : Cannot find object or property. 0x80092004 (-2146885628 CRYPT_E_NOT_FOUND)
+CertEnroll::CSignerCertificate::Initialize: The certificate does not have a property that references a private key.
+
+New-SelfSignedCertificate : Cannot bind parameter 'Signer'. Cannot convert value to type "Microsoft.CertificateServices.Commands.Certificate". Only core types are supported in this language mode.
+
+The third error above may come from multiple certificates with the same subject or issuer. To ensure there were no side effects from multiple certificates, all the localhostRootCA issued certificates were removed from the dev workstation certificate store before a new self-signed root certificate was created. The following Powershell commands were used to remove the certificates:
+$certs = dir cert: -Recurse | Where-Object { $_.Subject -eq "CN=localhostRootCA"} 
+$certs | %{Remove-Item -path $_.PSPath -recurse -Force}
+
+Caching of keystore information
+===============================
+The Docker Desktop VM appeared to be caching keystore files or information, refreshing these via the data/certificates directory did not have any effect, and generated "keystore may have been tampered with" errors. Restarting Docker Desktop cleared this problem. It is unknown whether this will present problems in DEV/TEST if keystore files are updated. This was only an issue on the dev workstation due to having to recreate all certificates, not just the pk8 files.

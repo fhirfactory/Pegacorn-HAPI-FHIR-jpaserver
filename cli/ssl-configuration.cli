@@ -1,0 +1,14 @@
+# This script will configure the ssl and use the certificates in the keystore and truststore.
+# Without this a warning will be in the logs and a self signed certificate for localhost will be automatically generated. 
+
+embed-server --server-config=standalone.xml
+batch
+
+# Enable client certificate authentication with a SSL certificate
+/core-service=management/security-realm=ssl-realm:add()
+/core-service=management/security-realm=ssl-realm/server-identity=ssl:add(keystore-path=/var/lib/pegacorn-keystores/keystore.jks,keystore-password=${env.KEY_PASSWORD}, key-password=${env.KEY_PASSWORD})
+/core-service=management/security-realm=ssl-realm/authentication=truststore:add(keystore-path=/var/lib/pegacorn-keystores/truststore.jks,keystore-password=${env.TRUSTSTORE_PASSWORD})
+
+run-batch
+
+stop-embedded-server

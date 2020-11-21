@@ -54,10 +54,15 @@ public class JpaRestfulServer extends RestfulServer {
 
   private static final long serialVersionUID = 1L;
 
+  public static JpaRestfulServer INSTANCE = null;
+  public static final String API_KEY_HEADER_NAME = "x-api-key";
+  
   @SuppressWarnings("unchecked")
   @Override
   protected void initialize() throws ServletException {
     super.initialize();
+
+    INSTANCE = this;
 
     /*
      * Create a FhirContext object that uses the version of FHIR
@@ -173,13 +178,15 @@ public class JpaRestfulServer extends RestfulServer {
      */
     setPagingProvider(appCtx.getBean(DatabaseBackedPagingProvider.class));
 
+    ApiKeyValidatorInterceptor apiKeyValidatorInterceptor = new ApiKeyValidatorInterceptor(API_KEY_HEADER_NAME, "HAPI_API_KEY");
+    registerInterceptor(apiKeyValidatorInterceptor);
+    
     /*
      * This interceptor formats the output using nice colourful
      * HTML output when the request is detected to come from a
      * browser.
      */
     ResponseHighlighterInterceptor responseHighlighterInterceptor = new ResponseHighlighterInterceptor();
-    ;
     this.registerInterceptor(responseHighlighterInterceptor);
 
     /*
