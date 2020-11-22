@@ -101,6 +101,16 @@ public class FhirServerConfigCommon {
     retVal.setExpungeEnabled(this.expungeEnabled);
     retVal.setAutoCreatePlaceholderReferenceTargets(this.allowPlaceholderReferences);
     retVal.setEmailFromAddress(this.emailFrom);
+    //
+    // Allow for Pegacorn & AETHER References
+    //
+    retVal.getTreatReferencesAsLogical().add("http://aether.health.act.gov.au/fhir/*");
+    retVal.getTreatReferencesAsLogical().add("http://ontologies.health.act.gov.au/fhir/*");
+    retVal.getTreatReferencesAsLogical().add("http://pegacorn.fhirfactory.net/fhir/*");
+    //
+    // Allow for Client (Ladon) Assigned IDs
+    //
+    retVal.setResourceClientIdStrategy(DaoConfig.ClientIdStrategyEnum.ANY);
 
     Integer maxFetchSize = HapiProperties.getMaximumFetchSize();
     retVal.setFetchSizeDefaultMaximum(maxFetchSize);

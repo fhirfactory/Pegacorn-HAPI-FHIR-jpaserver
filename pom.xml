@@ -14,7 +14,7 @@
         <version>5.1.0</version>
     </parent>
 
-    <artifactId>hapi-fhir-jpaserver-starter</artifactId>
+    <artifactId>pegacorn-HAPI-FHIR-jpaserver</artifactId>
     <version>5.1.0-Custom-SNAPSHOT</version>
 
     <prerequisites>
@@ -23,7 +23,7 @@
 
     <packaging>war</packaging>
 
-    <name>HAPI FHIR JPA Server - Starter Project</name>
+    <name>Pegacorn Base HAPI FHIR Server</name>
 
     <repositories>
         <repository>
@@ -289,7 +289,7 @@
     <build>
 
         <!-- Tells Maven to name the generated WAR file as hapi-fhir-jpaserver.war -->
-        <finalName>hapi-fhir-jpaserver</finalName>
+        <finalName>pegacorn-fhir-jpaserver</finalName>
 
         <plugins>
             <!-- The following is not required for the application to build, but allows you to test it by issuing "mvn jetty:run" from the command line. -->
@@ -299,7 +299,7 @@
                 <version>${jetty_version}</version>
                 <configuration>
                     <webApp>
-                        <contextPath>/hapi-fhir-jpaserver</contextPath>
+                        <contextPath>/fhir/r4</contextPath>
                         <allowDuplicateFragmentNames>true</allowDuplicateFragmentNames>
                     </webApp>
                 </configuration>
