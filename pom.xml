@@ -11,15 +11,29 @@
     <parent>
         <groupId>ca.uhn.hapi.fhir</groupId>
         <artifactId>hapi-fhir</artifactId>
-        <version>4.1.0</version>
+        <version>5.1.0</version>
     </parent>
 
     <artifactId>hapi-fhir-jpaserver-starter</artifactId>
-    <version>4.1.0-Custom-SNAPSHOT</version>
+    <version>5.1.0-Custom-SNAPSHOT</version>
 
     <prerequisites>
         <maven>3.5.0</maven>
     </prerequisites>
+
+    <packaging>war</packaging>
+
+    <name>HAPI FHIR JPA Server - Starter Project</name>
+
+    <repositories>
+        <repository>
+            <id>oss-snapshots</id>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -35,7 +49,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.11</version>
+            <version>8.0.16</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
         <dependency>
@@ -85,7 +99,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+        <!-- This dependency includes the JPA EMPI Server -->
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-jpaserver-empi</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <!-- This dependency is used for the "FHIR Tester" web app overlay -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
@@ -250,22 +269,22 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.0.0-rc1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- TODO: remove this and migrate to JU5 -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
-
-    <packaging>war</packaging>
-
-    <name>HAPI FHIR JPA Server - Starter Project</name>
-
-    <repositories>
-        <repository>
-            <id>oss-snapshots</id>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
 
     <build>
 
@@ -277,7 +296,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>9.4.8.v20180619</version>
+                <version>${jetty_version}</version>
                 <configuration>
                     <webApp>
                         <contextPath>/hapi-fhir-jpaserver</contextPath>
@@ -428,6 +447,7 @@
                     <ignoredResourcePatterns>
                         <ignoredResourcePattern>.*\.txt$</ignoredResourcePattern>
                         <ignoredResourcePattern>.*\.html$</ignoredResourcePattern>
+                        <ignoredResourcePattern>config/favicon.ico</ignoredResourcePattern>
                     </ignoredResourcePatterns>
                 </configuration>
             </plugin>

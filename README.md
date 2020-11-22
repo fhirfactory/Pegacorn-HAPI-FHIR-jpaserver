@@ -4,7 +4,7 @@ This project is a complete starter project you can use to deploy a FHIR server u
 
 Note that this project is specifically intended for end users of the HAPI FHIR JPA server module (in other words, it helps you implement HAPI FHIR, it is not the source of the library itself). If you are looking for the main HAPI FHIR project, see here: https://github.com/jamesagnew/hapi-fhir
 
-# Prerequisites
+## Prerequisites
 
 In order to use this sample, you should have:
 
@@ -12,11 +12,62 @@ In order to use this sample, you should have:
 - Oracle Java (JDK) installed: Minimum JDK8 or newer.
 - Apache Maven build tool (newest version)
 
-# Running Locally
+## Running via [Docker Hub](https://hub.docker.com/repository/docker/hapiproject/hapi)
+
+Each tagged/released version of `hapi-fhir-jpaserver` is built as a Docker image and published to Docker hub. To run the published Docker image from DockerHub:
+
+```
+docker pull hapiproject/hapi:latest
+docker run -p 8080:8080 hapiproject/hapi:tagname
+```
+
+This will run the docker image with the default configuration, mapping port 8080 from the container to port 8080 in the host. Once running, you can access `http://localhost:8080/hapi-fhir-jpaserver/fhir` in the browser to access the HAPI FHIR server's UI.
+
+If you change the mapped port, you need to change the configuration used by HAPI to have the correct `server_address` property/value.
+
+### Configuration via environment variables
+
+You can customize HAPI directly from the `run` command using environment variables. For example:
+
+`docker run -p 8090:8080 -e server_address=http://localhost:8090/hapi-fhir-jpaserver/fhir hapiproject/hapi:tagname`
+
+HAPI looks in the environment variables for properties in the [hapi.properties](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/blob/master/src/main/resources/hapi.properties) file.
+
+### Configuration via overridden hapi.properties file
+
+You can customize HAPI by telling HAPI to look for the `hapi.properties` file in a different location:
+
+`docker run -p 8090:8080 -e hapi.properties=/some/directory/with/hapi.properties hapiproject/hapi:tagname`
+
+### Example docker-compose.yml
+
+```
+version: '3.7'
+services:
+  web:
+    image: "hapiproject/hapi:tagname"
+    ports:
+      - "8090:8080"
+    configs:
+      - source: hapi
+        target: /data/hapi/hapi.properties
+    volumes:
+      - hapi-data:/data/hapi
+    environment:
+      JAVA_OPTS: '-Dhapi.properties=/data/hapi/hapi.properties'
+configs:
+  hapi:
+     external: true
+volumes:
+    hapi-data:
+        external: true
+```
+
+## Running locally
 
 The easiest way to run this server is to run it directly in Maven using a built-in Jetty server. To do this, change `src/main/resources/hapi.properties` `server_address` and `server.base` with the values commented out as _For Jetty, use this_ and then execute the following command:
 
-```
+```bash
 mvn jetty:run
 ```
 
@@ -26,17 +77,17 @@ Then, browse to the following link to use the server:
 
 If you need to run this server on a different port (using Maven), you can change the port in the run command as follows:
 
-```
+```bash
 mvn -Djetty.port=8888 jetty:run
 ```
 
 And replacing 8888 with the port of your choice.
 
-# Configuration
+## Configurations
 
 Much of this HAPI starter project can be configured using the properties file in _src/main/resources/hapi.properties_. By default, this starter project is configured to use Derby as the database.
 
-## MySql
+### MySql configuration
 
 To configure the starter app to use MySQL, instead of the default Derby, update the hapi.properties file to have the following:
 
@@ -46,7 +97,7 @@ To configure the starter app to use MySQL, instead of the default Derby, update 
 - datasource.username=admin
 - datasource.password=admin
 
-## PostgreSQL
+### PostgreSQL configuration
 
 To configure the starter app to use PostgreSQL, instead of the default Derby, update the hapi.properties file to have the following:
 
@@ -60,7 +111,7 @@ Because the integration tests within the project rely on the default Derby datab
 
 It is important to use PostgreSQL95Dialect when using PostgreSQL version 10+.
 
-## Overriding Properties
+## Overriding application properties
 
 You can override the properties that are loaded into the compiled web app (.war file) making a copy of the hapi.properties file on the file system, making changes to it, and then setting the JAVA_OPTS environment variable on the tomcat server to tell hapi-jpaserver-starter where the overriding properties file is. For example:
 
@@ -68,7 +119,7 @@ You can override the properties that are loaded into the compiled web app (.war 
 
 Note: This property name and the path is case-sensitive. "-DHAPI.PROPERTIES=XXX" will not work.
 
-# Customizing The Web Testpage UI
+## Customizing The Web Testpage UI
 
 The UI that comes with this server is an exact clone of the server available at [http://hapi.fhir.org](http://hapi.fhir.org). You may skin this UI if you'd like. For example, you might change the introductory text or replace the logo with your own.
 
@@ -76,7 +127,7 @@ The UI is customized using [Thymeleaf](https://www.thymeleaf.org/) template file
 
 Several template files that can be customized are found in the following directory: [https://github.com/hapifhir/hapi-fhir-jpaserver-starter/tree/master/src/main/webapp/WEB-INF/templates](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/tree/master/src/main/webapp/WEB-INF/templates)
 
-# Deploying to a Container
+## Deploying to a Container
 
 Using the Maven-Embedded Jetty method above is convenient, but it is not a good solution if you want to leave the server running in the background.
 
@@ -86,7 +137,7 @@ Tomcat is very popular, so it is a good choice simply because you will be able t
 
 To deploy to a container, you should first build the project:
 
-```
+```bash
 mvn clean install
 ```
 
@@ -96,7 +147,7 @@ Again, browse to the following link to use the server (note that the port 8080 m
 
 [http://localhost:8080/hapi-fhir-jpaserver/](http://localhost:8080/hapi-fhir-jpaserver/)
 
-# Deploy with docker compose
+## Deploy with docker compose
 
 Docker compose is a simple option to build and deploy container. To deploy with docker compose, you should build the project
 with `mvn clean install` and then bring up the containers with `docker-compose up -d --build`. The server can be
@@ -114,7 +165,7 @@ properties in hapi.properties:
 - datasource.username=admin
 - datasource.password=admin
 
-# Running hapi-fhir-jpaserver-example in Tomcat from IntelliJ
+## Running hapi-fhir-jpaserver-example in Tomcat from IntelliJ
 
 Install Tomcat.
 
@@ -148,7 +199,7 @@ Point your browser (or fiddler, or what have you) to `http://localhost:8080/hapi
 
 It is important to use MySQL5Dialect when using MySQL version 5+.
 
-# Enabling Subscriptions
+## Enabling Subscriptions
 
 The server may be configured with subscription support by enabling properties in the [hapi.properties](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/blob/master/src/main/resources/hapi.properties) file:
 
@@ -158,7 +209,11 @@ The server may be configured with subscription support by enabling properties in
 
 - `subscription.websocket.enabled` - Enables websocket subscriptions. With this enabled, your server will accept incoming websocket connections on the following URL (this example uses the default context path and port, you may need to tweak depending on your deployment environment): [ws://localhost:8080/hapi-fhir-jpaserver/websocket](ws://localhost:8080/hapi-fhir-jpaserver/websocket)
 
-# Using ElasticSearch
+## Enabling EMPI
+
+Set `empi.enabled=true` in the [hapi.properties](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/blob/master/src/main/resources/hapi.properties) file to enable EMPI on this server.  The EMPI matching rules are configured in [empi-rules.json](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/blob/master/src/main/resources/empi-rules.json).  The rules in this example file should be replaced with actual matching rules appropriate to your data. Note that EMPI relies on subscriptions, so for EMPI to work, subscriptions must be enabled. 
+
+## Using Elasticsearch
 
 By default, the server will use embedded lucene indexes for terminology and fulltext indexing purposes. You can switch this to using lucene by editing the properties in [hapi.properties](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/blob/master/src/main/resources/hapi.properties)
 
