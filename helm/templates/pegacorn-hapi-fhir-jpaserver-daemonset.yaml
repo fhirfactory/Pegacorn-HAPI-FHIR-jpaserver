@@ -89,6 +89,8 @@ spec:
           value: "{{ .Values.wildflyEnableDebug | default "no" }}"
         - name: KUBERNETES_SERVICE_NAME
           value: {{ .Values.serviceName }}
+        - name: HELM_RELEASE_TIME
+          value: "{{ date "20060102-150405" .Release.Time }}"
         - name: MY_HOST_IP
           valueFrom:
             fieldRef:
