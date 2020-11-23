@@ -23,8 +23,11 @@ public class ApiKeyValidatorInterceptor extends InterceptorAdapter {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApiKeyValidatorInterceptor.class);
     
+    private static final String ALLOW_INSECURE_REQUESTS = "ALLOW_INSECURE_REQUESTS";
+    
     private String apiKeyHeaderName; 
     private String apiKeyValue;
+    private boolean allowInsecureRequests;
     
     public ApiKeyValidatorInterceptor(String apiKeyHeaderName, String apiKeyEnvironmentVariableName) {
         if (StringUtils.isBlank(apiKeyHeaderName)) {
@@ -39,6 +42,14 @@ public class ApiKeyValidatorInterceptor extends InterceptorAdapter {
         if (StringUtils.isBlank(apiKeyValue)) {
             throw new IllegalArgumentException("The System Environment Variable " + apiKeyEnvironmentVariableName + " must be specified");
         }
+
+        String allowInsecureRequestsStr = System.getenv(ALLOW_INSECURE_REQUESTS);
+        if (StringUtils.isBlank(allowInsecureRequestsStr)) {
+            allowInsecureRequests = false;
+        } else {
+            allowInsecureRequests = Boolean.parseBoolean(allowInsecureRequestsStr);
+        }
+        log.warn("allowInsecureRequests={}", allowInsecureRequests);
     }
     
     @Override
@@ -46,7 +57,7 @@ public class ApiKeyValidatorInterceptor extends InterceptorAdapter {
         String requestURL = theRequest.getRequestURL().toString().trim();
         log.debug("In ApiKeyValidatorInterceptor http request={}", requestURL);
         
-        if (! theRequest.isSecure()) {
+        if (! (allowInsecureRequests || theRequest.isSecure())) {
             log.warn("Rejecting request " + requestURL + " as it was not secure");            
             throw new ForbiddenOperationException("Insecure requests are forbidden");            
         }

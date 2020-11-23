@@ -48,6 +48,8 @@ spec:
       - env:
         - name: HAPI_SERVER_ADDRESS
           value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/hapi-fhir-jpaserver/fhir/"
+        - name: ALLOW_INSECURE_REQUESTS
+          value: "{{ .Values.allowInsecureRequests | default false }}"
         - name: HAPI_API_KEY
           valueFrom:
            secretKeyRef:
