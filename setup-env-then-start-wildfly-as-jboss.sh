@@ -3,6 +3,9 @@
 
 echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with params $@"
 
+echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
+echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
+
 # Copy the certificate files based on
 # 1. https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
 # 2. https://itnext.io/postgresql-docker-image-with-ssl-certificate-signed-by-a-custom-certificate-authority-ca-3df41b5b53
