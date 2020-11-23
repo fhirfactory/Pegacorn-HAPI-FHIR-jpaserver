@@ -10,16 +10,16 @@ echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 # 1. https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
 # 2. https://itnext.io/postgresql-docker-image-with-ssl-certificate-signed-by-a-custom-certificate-authority-ca-3df41b5b53
 
-echo "Copying certificates like /var/lib/pegacorn-ssl-certs/$HAPI_DATASOURCE_USER.* to /etc/ssl/certs/"
+echo "Copying certificates like /var/lib/pegacorn-ssl-certs/$HAPI_DATASOURCE_USERNAME.* to /etc/ssl/certs/"
 
-cp /var/lib/pegacorn-ssl-certs/$HAPI_DATASOURCE_USER.pk8 /etc/ssl/certs/
-cp /var/lib/pegacorn-ssl-certs/$HAPI_DATASOURCE_USER.cer /etc/ssl/certs/
+cp /var/lib/pegacorn-ssl-certs/$HAPI_DATASOURCE_USERNAME.pk8 /etc/ssl/certs/
+cp /var/lib/pegacorn-ssl-certs/$HAPI_DATASOURCE_USERNAME.cer /etc/ssl/certs/
 cp /var/lib/pegacorn-ssl-certs/ca.cer /etc/ssl/certs/pegacorn-ca.cer
 
-chmod 400 /etc/ssl/certs/$HAPI_DATASOURCE_USER.pk8
-chown jboss:jboss /etc/ssl/certs/$HAPI_DATASOURCE_USER.pk8 
-chmod 400 /etc/ssl/certs/$HAPI_DATASOURCE_USER.cer
-chown jboss:jboss /etc/ssl/certs/$HAPI_DATASOURCE_USER.cer 
+chmod 400 /etc/ssl/certs/$HAPI_DATASOURCE_USERNAME.pk8
+chown jboss:jboss /etc/ssl/certs/$HAPI_DATASOURCE_USERNAME.pk8 
+chmod 400 /etc/ssl/certs/$HAPI_DATASOURCE_USERNAME.cer
+chown jboss:jboss /etc/ssl/certs/$HAPI_DATASOURCE_USERNAME.cer 
 chmod 400 /etc/ssl/certs/pegacorn-ca.cer
 chown jboss:jboss /etc/ssl/certs/pegacorn-ca.cer 
 
@@ -45,7 +45,7 @@ echo "Adding hosts entry to /etc/hosts $MY_HOST_IP $DATASOURCE_SERVICE_NAME.$MY_
 echo "$MY_HOST_IP $DATASOURCE_SERVICE_NAME.$MY_POD_NAMESPACE" >> /etc/hosts
 cat /etc/hosts
 
-export HAPI_DATASOURCE_URL="jdbc:postgresql://${DATASOURCE_SERVICE_NAME}.${MY_POD_NAMESPACE}:${DATASOURCE_PORT_AND_DBNAME}?ssl=true&sslmode=verify-full&sslcert=/etc/ssl/certs/${HAPI_DATASOURCE_USER}.cer&sslkey=/etc/ssl/certs/${HAPI_DATASOURCE_USER}.pk8&sslrootcert=/etc/ssl/certs/pegacorn-ca.cer&sslpassword=${DB_USER_KEY_PASSWORD}"
+export HAPI_DATASOURCE_URL="jdbc:postgresql://${DATASOURCE_SERVICE_NAME}.${MY_POD_NAMESPACE}:${DATASOURCE_PORT_AND_DBNAME}?ssl=true&sslmode=verify-full&sslcert=/etc/ssl/certs/${HAPI_DATASOURCE_USERNAME}.cer&sslkey=/etc/ssl/certs/${HAPI_DATASOURCE_USERNAME}.pk8&sslrootcert=/etc/ssl/certs/pegacorn-ca.cer&sslpassword=${DB_USER_KEY_PASSWORD}"
 
 # then start /start-wildfly.sh script as jboss user
 # NOTE: gosu is used instead of su-exec as the wildfly docker image is based on centos, whereas the postgres one is based on alpine,
