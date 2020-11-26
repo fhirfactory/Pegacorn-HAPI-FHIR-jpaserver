@@ -10,7 +10,7 @@ trigger:
 variables:
   myNameSpace: 'site-a'
   myDockerRepo: 'aethercontainerregistry.azurecr.io'
-  myDockerImageName: '$(myDockerRepo)/pegacorn/$(Build.Repository.Name)'
+  myDockerImageName: 'pegacorn/pegacorn-hapi-fhir-jpaserver'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -52,16 +52,16 @@ steps:
   displayName: 'Build a docker image'
   inputs:
     containerRegistry: 'AetherAzureContainerRegistry'
-    repository: 'pegacorn/$(Build.Repository.Name)'
+    repository: '$(myDockerImageName)'
     tags: '$(projectVersion)'
     command: 'build'
-    Dockerfile: 'Dockerfile'
+    Dockerfile: 'Dockerfile.wildfly'
     arguments: '--build-arg IMAGE_BUILD_TIMESTAMP="$(buildTimestamp)"'
 - task: Docker@2
   displayName: 'Push a docker image'
   inputs:
     containerRegistry: 'AetherAzureContainerRegistry'
-    repository: 'pegacorn/$(Build.Repository.Name)'
+    repository: '$(myDockerImageName)'
     tags: '$(projectVersion)'
     command: 'push'
 #- task: HelmInstaller@1
