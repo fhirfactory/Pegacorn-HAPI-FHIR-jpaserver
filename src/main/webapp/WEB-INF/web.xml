@@ -48,7 +48,7 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>fhirServlet</servlet-name>
-		<url-pattern>/fhir/r4/*</url-pattern>
+		<url-pattern>/pegacorn/internal/fhir/r4/*</url-pattern>
 	</servlet-mapping>
 
 </web-app>
