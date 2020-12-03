@@ -47,7 +47,7 @@ spec:
       containers:
       - env:
         - name: HAPI_SERVER_ADDRESS
-          value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/pegacorn-fhir-jpaserver/fhir/r4/"
+          value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/pegacorn/internal/fhir/r4/"
         - name: ALLOW_INSECURE_REQUESTS
           value: "{{ .Values.allowInsecureRequests | default false }}"
         - name: HAPI_API_KEY
