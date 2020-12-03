@@ -47,7 +47,7 @@ spec:
       containers:
       - env:
         - name: HAPI_SERVER_ADDRESS
-          value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/hapi-fhir-jpaserver/fhir/"
+          value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/pegacorn/internal/fhir/r4/"
         - name: ALLOW_INSECURE_REQUESTS
           value: "{{ .Values.allowInsecureRequests | default false }}"
         - name: HAPI_API_KEY
@@ -74,7 +74,7 @@ spec:
           value: {{ .Values.dataSourceServiceName }}
         - name: DATASOURCE_PORT_AND_DBNAME
           value: {{ .Values.dataSourcePortAndDBName }}          
-        - name: HAPI_DATASOURCE_USER
+        - name: HAPI_DATASOURCE_USERNAME
           value: {{ .Values.dbUser }}
         {{- if (.Values.wildflyAdminUser) }} 
         - name: WILDFLY_MANAGEMENT_USER
