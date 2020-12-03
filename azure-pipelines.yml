@@ -1,0 +1,83 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger:
+- master
+- pegacorn-*-custom
+
+variables:
+  myNameSpace: 'site-a'
+  myDockerRepo: 'aethercontainerregistry.azurecr.io'
+  myDockerImageName: '$(myDockerRepo)/pegacorn/$(Build.Repository.Name)'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: DownloadSecureFile@1
+  name: mvnSettings
+  displayName: 'Download Maven Settings'
+  inputs:
+    secureFile: 'settings.xml'
+- script: |
+    echo Installing $(mvnSettings.secureFilePath) to ${HOME}/.m2/settings.xml ...
+    sudo chown root:root $(mvnSettings.secureFilePath)
+    sudo chmod a+r $(mvnSettings.secureFilePath)
+    sudo mkdir -p -m=777 ${HOME}/.m2
+    sudo cp -f $(mvnSettings.secureFilePath) ${HOME}/.m2/settings.xml
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    mavenOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.11'
+    jdkArchitectureOption: 'x64'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    goals: 'deploy'
+    options: '-DskipTests'
+# Lookup the maven version and set in a variable, based on
+# 1. https://stackoverflow.com/questions/56394615/how-to-display-the-project-version-as-release-name-in-azure-devops
+# 2. https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables
+# 3. https://stackoverflow.com/questions/2264428/how-to-convert-a-string-to-lower-case-in-bash
+- bash: |
+    cd $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/
+    v=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | tr '[:upper:]' '[:lower:]')
+    echo "##vso[task.setvariable variable=projectVersion]$v"
+    buildTimestamp=$(TZ='Australia/Sydney' date --rfc-3339='seconds')
+    echo "##vso[task.setvariable variable=buildTimestamp]$buildTimestamp"    
+- task: Docker@2
+  displayName: 'Build a docker image'
+  inputs:
+    containerRegistry: 'AetherAzureContainerRegistry'
+    repository: 'pegacorn/$(Build.Repository.Name)'
+    tags: '$(projectVersion)'
+    command: 'build'
+    Dockerfile: 'Dockerfile'
+    arguments: '--build-arg IMAGE_BUILD_TIMESTAMP="$(buildTimestamp)"'
+- task: Docker@2
+  displayName: 'Push a docker image'
+  inputs:
+    containerRegistry: 'AetherAzureContainerRegistry'
+    repository: 'pegacorn/$(Build.Repository.Name)'
+    tags: '$(projectVersion)'
+    command: 'push'
+#- task: HelmInstaller@1
+#  displayName: 'Install Helm 3.1.1'
+#  inputs: 
+#    helmVersionToInstall: 3.1.1
+#- task: HelmDeploy@0
+#  displayName: 'helm upgrade pegacorn-hestia-gateway-$(myNameSpace)'
+#  inputs:
+#    connectionType: 'Kubernetes Service Connection'
+#    kubernetesServiceConnection: 'Site-a Kubernetes DEV cluster-site-a-1584657593220'
+#    namespace: '$(myNameSpace)'
+#    command: upgrade
+#    chartType: FilePath
+#    chartPath: helm
+#    releaseName: 'pegacorn-hestia-gateway-$(myNameSpace)'
+#    overrideValues: 'serviceName=pegacorn-hestia-gateway,basePort=30840,imageTag=$(projectVersion),dataSourceHostPortAndDBName="pegacorn-hestia-dam.$(myNameSpace):30833/hapi",dockerRepo=$(myDockerRepo)'
+
+

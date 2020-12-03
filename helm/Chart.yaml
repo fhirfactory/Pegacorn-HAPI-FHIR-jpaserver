@@ -1,0 +1,6 @@
+---
+name: pegacorn-hapi-fhir-jpaserver
+sources:
+- https://actgovernment@dev.azure.com/ACTGovernment/Pegacorn/_git/pegacorn-hapi-fhir-jpaserver
+version: 1.0.0-SNAPSHOT
+description: Customisations to https://github.com/hapifhir/hapi-fhir-jpaserver-starter
