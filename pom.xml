@@ -332,6 +332,7 @@
                             <artifactId>hapi-fhir-testpage-overlay</artifactId>
                             <excludes>
                                 <exclude>WEB-INF/templates/tmpl-navbar-left.html</exclude>
+                                <exclude>WEB-INF/templates/tmpl-navbar-top.html</exclude>
                             </excludes>
                         </overlay>
                     </overlays>
@@ -343,6 +344,7 @@
                         <targetPath>WEB-INF/templates</targetPath>
                         <includes>
                             <include>tmpl-navbar-left.html</include>
+                            <include>tmpl-navbar-top.html</include>
                         </includes>
                         </resource>
                     </webResources>
