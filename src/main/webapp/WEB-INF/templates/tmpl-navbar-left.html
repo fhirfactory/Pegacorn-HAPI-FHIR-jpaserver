@@ -2,7 +2,8 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <div th:fragment="left" class="col-sm-3 col-md-3 sidebar">
 
-	<!-- <h4>Options</h4>
+<!-- 
+	<h4>Options</h4>
 
 	<label class="navBarButtonLabel">Encoding</label>
 	<div class="btn-group " data-toggle="buttons" id="encodingBtnGroup">
@@ -46,7 +47,7 @@
 			<input type="radio" name="_summary" id="summary-count" value="count" />count
 		</label>
 	</div>
-
+-->
 	<script type="text/javascript" th:inline="javascript">
 		
 	$( document ).ready(function() {
@@ -102,14 +103,15 @@
 	}
 	</script>
 
+<!-- 
 	<h4>Server</h4>
 
 	<ul class="nav nav-sidebar">
 		<li th:class="(${notHome} == null and ${resourceName} != null and ${resourceName.empty}) ? 'active' : ''">
 			<a href="#" onclick="doAction(this, 'home', null);">Server Home/Actions</a>
 		</li>
-	</ul> -->
-
+	</ul> 
+-->
 	<h4>Resources</h4>
 	
 	<ul class="nav nav-sidebar" th:unless="${conf.rest.empty}">
