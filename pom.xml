@@ -334,6 +334,7 @@
                                 <exclude>js/RestfulTester.js</exclude>
                                 <exclude>WEB-INF/templates/tmpl-navbar-left.html</exclude>
                                 <exclude>WEB-INF/templates/tmpl-navbar-top.html</exclude>
+                                <exclude>WEB-INF/templates/result.html</exclude>
                             </excludes>
                         </overlay>
                     </overlays>
@@ -354,6 +355,7 @@
 							<includes>
 								<include>tmpl-navbar-left.html</include>
 								<include>tmpl-navbar-top.html</include>
+                                <include>result.html</include>
 							</includes>
                         </resource>
                     </webResources>
