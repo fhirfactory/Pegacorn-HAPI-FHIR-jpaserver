@@ -6,6 +6,15 @@ echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with pa
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
 echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 
+# Update modules.xml for vulnerable jars that were updated in the Docker image
+sed -i "s/sshd-core-2.6.0.jar/sshd-core-2.7.0.jar/g" $JBOSS_HOME/modules/system/layers/base/org/apache/sshd/main/module.xml
+sed -i "s/jackson-databind-2.12.3.jar/jackson-databind-2.12.6.1.jar/g" $JBOSS_HOME/modules/system/layers/base/com/fasterxml/jackson/core/jackson-databind/main/module.xml
+sed -i "s/libthrift-0.13.0.jar/libthrift-0.14.0.jar/g" $JBOSS_HOME/modules/system/layers/base/org/apache/thrift/main/module.xml
+sed -i "s/xmlsec-2.1.6.jar/xmlsec-2.2.3.jar/g" $JBOSS_HOME/modules/system/layers/base/org/apache/santuario/xmlsec/main/module.xml
+sed -i "s/jsoup-1.8.3.jar/jsoup-1.14.3.jar/g" $JBOSS_HOME/modules/system/layers/base/org/jsoup/main/module.xml
+sed -i "s/jaeger-core-1.5.0.jar/jaeger-core-1.6.0.jar/g" $JBOSS_HOME/modules/system/layers/base/io/jaegertracing/jaeger/main/module.xml
+sed -i "s/jaeger-thrift-1.5.0.jar/jaeger-thrift-1.6.0.jar/g" $JBOSS_HOME/modules/system/layers/base/io/jaegertracing/jaeger/main/module.xml
+
 # Copy the certificate files based on
 # 1. https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
 # 2. https://itnext.io/postgresql-docker-image-with-ssl-certificate-signed-by-a-custom-certificate-authority-ca-3df41b5b53

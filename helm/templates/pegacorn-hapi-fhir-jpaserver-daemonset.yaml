@@ -137,7 +137,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
         name: wildfly
         ports:
         - containerPort: 8443
@@ -167,7 +167,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 10
+          initialDelaySeconds: 60
         securityContext:
           privileged: false
         volumeMounts:

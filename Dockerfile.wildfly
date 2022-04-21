@@ -1,4 +1,4 @@
-FROM fhirfactory/pegacorn-base-docker-wildfly:1.0.0
+FROM fhirfactory/pegacorn-base-docker-wildfly:1.0.1
 
 # Copy and run the cli scripts to modify the standalone.xml configuration.
 COPY cli/ssl-configuration.cli $JBOSS_HOME/bin/ssl-configuration.cli
