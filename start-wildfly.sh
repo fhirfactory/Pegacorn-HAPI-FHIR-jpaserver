@@ -49,6 +49,9 @@ if [ -n "$WILDFLY_LOG_LEVEL" ] && [ "$WILDFLY_LOG_LEVEL" != 'INFO' ]; then
     sed -i "s+<level name=\"INFO\"/>+<level name=\"$WILDFLY_LOG_LEVEL\"/>+g" "$JBOSS_HOME/standalone/configuration/standalone.xml"
 fi
 
+# add date to formatters just using time. This should just be the COLOR-PATTERN formatter
+sed -i "s+{HH:mm:ss,SSS}+{yyyy-MM-dd HH:mm:ss,SSS}+g" "$JBOSS_HOME/standalone/configuration/standalone.xml"
+
 echo " "
 echo "Starting wildfly with the following configuration:"
 cat "$JBOSS_HOME/standalone/configuration/standalone.xml"
