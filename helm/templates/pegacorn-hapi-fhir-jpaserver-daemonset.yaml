@@ -44,10 +44,21 @@ spec:
                 operator: In
                 values:
                 - "Yes"
+      {{- if (.Values.dnsEntry) }} 
+      hostAliases:
+        - ip: {{ .Values.loadBalancerIP }}
+          hostnames:
+          {{- if (.Values.dnsEntry) }} 
+          - {{ .Values.dnsEntry }}
+          {{- end }}
+          {{- if (.Values.externalDnsEntry) }} 
+          - {{ .Values.externalDnsEntry }}
+          {{- end }}
+      {{- end }}
       containers:
       - env:
         - name: HAPI_SERVER_ADDRESS
-          value: "https://{{ .Values.serviceName }}.{{ .Release.Namespace }}:{{ .Values.basePort }}/pegacorn/internal/fhir/r4/"
+          value: "https://{{ .Values.externalDnsEntry | default (print (.Values.dnsEntry | default (print .Values.serviceName "." .Release.Namespace) ) ":" .Values.basePort) }}/pegacorn/internal/fhir/r4/"
         - name: ALLOW_INSECURE_REQUESTS
           value: "{{ .Values.allowInsecureRequests | default false }}"
         - name: HAPI_API_KEY
@@ -137,7 +148,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
         name: wildfly
         ports:
         - containerPort: 8443
@@ -167,7 +178,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 10
+          initialDelaySeconds: 60
         securityContext:
           privileged: false
         volumeMounts:
