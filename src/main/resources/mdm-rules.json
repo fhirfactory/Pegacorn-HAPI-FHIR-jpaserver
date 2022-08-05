@@ -1,4 +1,6 @@
 {
+  "version": "1",
+  "mdmTypes": ["Patient", "Practitioner"],
   "candidateSearchParams": [
     {
       "resourceType": "Patient",
@@ -25,23 +27,22 @@
       "name": "cosine-given-name",
       "resourceType": "*",
       "resourcePath": "name.given",
-      "metric": "COSINE",
-      "matchThreshold": 0.8,
-      "exact": true
+      "matcher": {
+        "algorithm": "COLOGNE"
+      }
     },
     {
       "name": "jaro-last-name",
       "resourceType": "*",
       "resourcePath": "name.family",
-      "metric": "JARO_WINKLER",
-      "matchThreshold": 0.8,
-      "exact": true
+      "matcher": {
+        "algorithm": "SOUNDEX"
+      }
     }
   ],
   "matchResultMap": {
     "cosine-given-name" : "POSSIBLE_MATCH",
     "cosine-given-name,jaro-last-name" : "MATCH"
   },
-  "eidSystem": "http://company.io/fhir/NamingSystem/custom-eid-system",
-  "version": "PLACEHOLDER NEEDS TO BE UPDATED IF EMPI ENABLED IN HAPI.PROPERTIES"
+  "eidSystem": "http://company.io/fhir/NamingSystem/custom-eid-system"
 }
