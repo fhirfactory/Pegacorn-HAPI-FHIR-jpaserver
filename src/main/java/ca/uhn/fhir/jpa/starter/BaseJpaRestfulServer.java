@@ -134,7 +134,7 @@ public class BaseJpaRestfulServer extends RestfulServer {
     // Customize supported resource types
     ApplicationContext appCtx = (ApplicationContext) getServletContext().getAttribute("org.springframework.web.context.WebApplicationContext.ROOT");
     // Customize supported resource types
-    Set<String> supportedResourceTypes = (Set<String>) appProperties.getSupported_resource_types();
+    List<String> supportedResourceTypes = appProperties.getSupported_resource_types();
 
     if (!supportedResourceTypes.isEmpty() && !supportedResourceTypes.contains("SearchParameter")) {
       supportedResourceTypes.add("SearchParameter");
