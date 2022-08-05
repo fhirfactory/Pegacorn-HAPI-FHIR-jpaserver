@@ -19,13 +19,9 @@ import ca.uhn.fhir.jpa.partition.PartitionManagementProvider;
 import ca.uhn.fhir.jpa.provider.IJpaSystemProvider;
 import ca.uhn.fhir.jpa.provider.JpaCapabilityStatementProvider;
 import ca.uhn.fhir.jpa.provider.JpaConformanceProviderDstu2;
-import ca.uhn.fhir.jpa.provider.JpaSystemProviderDstu2;
 import ca.uhn.fhir.jpa.provider.SubscriptionTriggeringProvider;
 import ca.uhn.fhir.jpa.provider.TerminologyUploaderProvider;
 import ca.uhn.fhir.jpa.provider.dstu3.JpaConformanceProviderDstu3;
-import ca.uhn.fhir.jpa.provider.dstu3.JpaSystemProviderDstu3;
-import ca.uhn.fhir.jpa.provider.r4.JpaSystemProviderR4;
-import ca.uhn.fhir.jpa.provider.r5.JpaSystemProviderR5;
 import ca.uhn.fhir.jpa.provider.ValueSetOperationProvider;
 import ca.uhn.fhir.jpa.search.DatabaseBackedPagingProvider;
 import ca.uhn.fhir.jpa.subscription.util.SubscriptionDebugLogInterceptor;
@@ -58,18 +54,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.cors.CorsConfiguration;
 
 public class BaseJpaRestfulServer extends RestfulServer {
-  private static final org.slf4j.Logger ourLog = LoggerFactory.getLogger(BaseJpaRestfulServer.class);
+  private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(BaseJpaRestfulServer.class);
 
 	private static final long serialVersionUID = 1L;
   @Autowired
@@ -132,44 +126,14 @@ public class BaseJpaRestfulServer extends RestfulServer {
      * specified in the properties file.
      */
     // Customize supported resource types
-    ApplicationContext appCtx = (ApplicationContext) getServletContext().getAttribute("org.springframework.web.context.WebApplicationContext.ROOT");
-    // Customize supported resource types
     List<String> supportedResourceTypes = appProperties.getSupported_resource_types();
 
     if (!supportedResourceTypes.isEmpty() && !supportedResourceTypes.contains("SearchParameter")) {
       supportedResourceTypes.add("SearchParameter");
-    }
-
-    if (!supportedResourceTypes.isEmpty()) {
-      DaoRegistry daoRegistry = appCtx.getBean(DaoRegistry.class);
       daoRegistry.setSupportedResourceTypes(supportedResourceTypes);
     }
 
-    /*
-     * ResourceProviders are fetched from the Spring context
-     */
-    FhirVersionEnum fhirVersion = appProperties.getFhir_version();
-    ResourceProviderFactory resourceProviders;
-    Object systemProvider;
-    if (fhirVersion == FhirVersionEnum.DSTU2) {
-      resourceProviders = appCtx.getBean("myResourceProvidersDstu2", ResourceProviderFactory.class);
-      systemProvider = appCtx.getBean("mySystemProviderDstu2", JpaSystemProviderDstu2.class);
-    } else if (fhirVersion == FhirVersionEnum.DSTU3) {
-      resourceProviders = appCtx.getBean("myResourceProvidersDstu3", ResourceProviderFactory.class);
-      systemProvider = appCtx.getBean("mySystemProviderDstu3", JpaSystemProviderDstu3.class);
-    } else if (fhirVersion == FhirVersionEnum.R4) {
-      resourceProviders = appCtx.getBean("myResourceProvidersR4", ResourceProviderFactory.class);
-      systemProvider = appCtx.getBean("mySystemProviderR4", JpaSystemProviderR4.class);
-    } else if (fhirVersion == FhirVersionEnum.R5) {
-      resourceProviders = appCtx.getBean("myResourceProvidersR5", ResourceProviderFactory.class);
-      systemProvider = appCtx.getBean("mySystemProviderR5", JpaSystemProviderR5.class);
-    } else {
-      throw new IllegalStateException();
-    }
-
-    setFhirContext(appCtx.getBean(FhirContext.class));
-
-//     setFhirContext(fhirSystemDao.getContext());
+    setFhirContext(fhirSystemDao.getContext());
 
     /*
      * Order matters - the MDM provider registers itself on the resourceProviderFactory - hence the loading must be done
@@ -190,9 +154,7 @@ public class BaseJpaRestfulServer extends RestfulServer {
      * provide further customization of your server's CapabilityStatement
      */
 
-    // FhirVersionEnum fhirVersion = fhirSystemDao.getContext().getVersion().getVersion();
-    DaoConfig daoConfig = appCtx.getBean(DaoConfig.class);
-    ISearchParamRegistry searchParamRegistry = appCtx.getBean(ISearchParamRegistry.class);
+    FhirVersionEnum fhirVersion = fhirSystemDao.getContext().getVersion().getVersion();
     if (fhirVersion == FhirVersionEnum.DSTU2) {
 
       JpaConformanceProviderDstu2 confProvider = new JpaConformanceProviderDstu2(this, fhirSystemDao,
