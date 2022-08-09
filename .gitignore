@@ -1,7 +1,7 @@
 *.orig
 target/
 *.iml
-
+.vscode/
 # Compiled class file
 *.class
 

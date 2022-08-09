@@ -1,43 +1,32 @@
-FROM maven:3.8-openjdk-17-slim as build-hapi
-WORKDIR /tmp/hapi-fhir-jpaserver-starter
+FROM fhirfactory/pegacorn-base-docker-wildfly:1.1.0
 
-COPY pom.xml .
-COPY server.xml .
-RUN mvn -ntp dependency:go-offline
+# Copy and run the cli scripts to modify the standalone.xml configuration.
+COPY cli/ssl-configuration.cli $JBOSS_HOME/bin/ssl-configuration.cli
 
-COPY src/ /tmp/hapi-fhir-jpaserver-starter/src/
-RUN mvn clean install -DskipTests -Djdk.lang.Process.launchMechanism=vfork
+# After running each command the content of the "$JBOSS_HOME/standalone/configuration/standalone_xml_history/current" directory
+# needs to be deleted as each steps expects it to be empty.  Maybe there is another way??
+#Temporarily disable client certificate authentication with a SSL certificate
+#RUN $JBOSS_HOME/bin/jboss-cli.sh --file=$JBOSS_HOME/bin/ssl-configuration.cli && \
+#    rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history/current/*
 
-FROM build-hapi AS build-distroless
-RUN mvn package spring-boot:repackage -Pboot
-RUN mkdir /app && cp /tmp/hapi-fhir-jpaserver-starter/target/ROOT.war /app/main.war
+# deploy the application
+COPY target/*.war $JBOSS_HOME/standalone/deployments/
 
+COPY setup-env-then-start-wildfly-as-jboss.sh /
+COPY start-wildfly.sh /
 
-########### bitnami tomcat version is suitable for debugging and comes with a shell
-########### it can be built using eg. `docker build --target tomcat .`
-FROM bitnami/tomcat:9.0 as tomcat
-
-RUN rm -rf /opt/bitnami/tomcat/webapps/ROOT && \
-    rm -rf /opt/bitnami/tomcat/webapps_default/ROOT && \
-    mkdir -p /opt/bitnami/hapi/data/hapi/lucenefiles && \
-    chmod 775 /opt/bitnami/hapi/data/hapi/lucenefiles
+ARG IMAGE_BUILD_TIMESTAMP
+ENV IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}
+RUN echo IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}
 
 USER root
-RUN mkdir -p /target && chown -R 1001:1001 target
-USER 1001
+# Install gosu based on
+# 1. https://gist.github.com/rafaeltuelho/6b29827a9337f06160a9
+# 2. https://github.com/tianon/gosu
+# 3. https://github.com/tianon/gosu/releases/download/1.12/gosu-amd64
+COPY gosu-amd64 /usr/local/bin/gosu
+RUN chmod +x /usr/local/bin/gosu && \
+	chmod +x /setup-env-then-start-wildfly-as-jboss.sh && \
+   	chmod +x /start-wildfly.sh
 
-COPY --chown=1001:1001 catalina.properties /opt/bitnami/tomcat/conf/catalina.properties
-COPY --chown=1001:1001 server.xml /opt/bitnami/tomcat/conf/server.xml
-COPY --from=build-hapi --chown=1001:1001 /tmp/hapi-fhir-jpaserver-starter/target/ROOT.war /opt/bitnami/tomcat/webapps_default/ROOT.war
-
-ENV ALLOW_EMPTY_PASSWORD=yes
-
-########### distroless brings focus on security and runs on plain spring boot - this is the default image
-FROM gcr.io/distroless/java17:nonroot as default
-COPY --chown=nonroot:nonroot --from=build-distroless /app /app
-# 65532 is the nonroot user's uid
-# used here instead of the name to allow Kubernetes to easily detect that the container
-# is running as a non-root (uid != 0) user.
-USER 65532:65532
-WORKDIR /app
-CMD ["/app/main.war"]
+CMD	["/setup-env-then-start-wildfly-as-jboss.sh"]
