@@ -5,23 +5,23 @@
 		metadata-complete="false"
 		version="3.1">
 
-	<listener>
+	<!-- <listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-	</listener>
-	<context-param>
+	</listener> -->
+	<!-- <context-param>
 		<param-name>contextClass</param-name>
 		<param-value>
-			ca.uhn.fhir.jpa.starter.ApplicationContext
+			ca.uhn.fhir.jpa.starter.Application
 		</param-value>
 	</context-param>
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
 		<param-value>
 		</param-value>
-	</context-param>
+	</context-param> -->
 
 	<!-- Servlets -->
-	<servlet>
+	<!-- <servlet>
 		<servlet-name>spring</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<init-param>
@@ -35,8 +35,8 @@
 			</param-value>
 		</init-param>
 		<load-on-startup>2</load-on-startup>
-	</servlet>
-	<servlet-mapping>
+	</servlet> -->
+	<!-- <servlet-mapping>
 		<servlet-name>spring</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
@@ -49,6 +49,6 @@
 	<servlet-mapping>
 		<servlet-name>fhirServlet</servlet-name>
 		<url-pattern>/pegacorn/internal/fhir/r4/*</url-pattern>
-	</servlet-mapping>
+	</servlet-mapping> -->
 
 </web-app>
