@@ -45,6 +45,7 @@ public class FhirTesterConfig {
         .withName(t.getValue().getName());
       retVal.setRefuseToFetchThirdPartyUrls(
         t.getValue().getRefuse_to_fetch_third_party_urls());
+      retVal.setClientFactory(new ApiKeyClientFactory(JpaRestfulServer.API_KEY_HEADER_NAME));
 
     });
     return retVal;
