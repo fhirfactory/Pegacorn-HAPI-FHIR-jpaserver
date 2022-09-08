@@ -34,6 +34,14 @@ wildfly_runner+=( -Djavax.net.ssl.keyStorePassword="${KEY_PASSWORD}" )
 wildfly_runner+=( -Djavax.net.ssl.trustStore="/var/lib/pegacorn-keystores/truststore.jks" )
 wildfly_runner+=( -Djavax.net.ssl.trustStorePassword="${TRUSTSTORE_PASSWORD}" )
 
+# Wildfly retention logs
+sed -i s+'periodic-rotating-file-handler'+'periodic-size-rotating-file-handler'+g "$JBOSS_HOME/standalone/configuration/standalone.xml"
+# sed -i s+'<suffix value=".yyyy-MM-dd"/>'++g "$JBOSS_HOME/standalone/configuration/standalone.xml"
+rotate_size='                <rotate-size value="48M"/>'
+backup_index='                <max-backup-index value="4"/>'
+sed -i "\~/periodic-size-rotating-file-handler~s~^~$rotate_size\n~" "$JBOSS_HOME/standalone/configuration/standalone.xml"
+sed -i "\~/periodic-size-rotating-file-handler~s~^~$backup_index\n~" "$JBOSS_HOME/standalone/configuration/standalone.xml"
+
 if [ -n "$JVM_MAX_HEAP_SIZE" ]; then
     sed -i "s+Xms64m -Xmx512m+Xms$JVM_MAX_HEAP_SIZE -Xmx$JVM_MAX_HEAP_SIZE+g" /opt/jboss/wildfly/bin/standalone.conf
     sed -i "s+MaxMetaspaceSize=256m+MaxMetaspaceSize=$JVM_MAX_HEAP_SIZE+g" /opt/jboss/wildfly/bin/standalone.conf
@@ -61,4 +69,3 @@ echo "-------------------------------------------------------"
 echo "Starting wildfly with the command: ${wildfly_runner[@]}"
 echo "-------------------------------------------------------"
 "${wildfly_runner[@]}"
-
