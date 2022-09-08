@@ -183,9 +183,14 @@ spec:
           privileged: false
         volumeMounts:
         - name: certificates
-          mountPath: /var/lib/pegacorn-ssl-certs          
+          mountPath: /var/lib/pegacorn-ssl-certs
+        - name: jpa-resourcetable
+          mountPath: /opt/jboss/target/lucenefiles        
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
       volumes:
       - name: certificates
         hostPath:
           path: {{ .Values.hostPathCerts }}
+      - name: jpa-resourcetable
+        hostPath:
+          path: {{ .Values.hostPathResourceTable }}
