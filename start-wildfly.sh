@@ -36,8 +36,8 @@ wildfly_runner+=( -Djavax.net.ssl.trustStorePassword="${TRUSTSTORE_PASSWORD}" )
 
 # Wildfly retention logs
 sed -i s+'periodic-rotating-file-handler'+'periodic-size-rotating-file-handler'+g "$JBOSS_HOME/standalone/configuration/standalone.xml"
-# sed -i s+'<suffix value=".yyyy-MM-dd"/>'++g "$JBOSS_HOME/standalone/configuration/standalone.xml"
-rotate_size='                <rotate-size value="48M"/>'
+sed -i s+'<suffix value=".yyyy-MM-dd"/>'+'<suffix value=".yyyy-MM"/>'+g "$JBOSS_HOME/standalone/configuration/standalone.xml"
+rotate_size='                <rotate-size value="6M"/>'
 backup_index='                <max-backup-index value="4"/>'
 sed -i "\~/periodic-size-rotating-file-handler~s~^~$rotate_size\n~" "$JBOSS_HOME/standalone/configuration/standalone.xml"
 sed -i "\~/periodic-size-rotating-file-handler~s~^~$backup_index\n~" "$JBOSS_HOME/standalone/configuration/standalone.xml"
