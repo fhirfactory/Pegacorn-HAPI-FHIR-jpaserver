@@ -425,35 +425,9 @@
                         <overlay>
                             <groupId>ca.uhn.hapi.fhir</groupId>
                             <artifactId>hapi-fhir-testpage-overlay</artifactId>
-                            <excludes>
-                                <exclude>js/RestfulTester.js</exclude>
-                                <exclude>WEB-INF/templates/tmpl-navbar-left.html</exclude>
-                                <exclude>WEB-INF/templates/tmpl-navbar-top.html</exclude>
-                                <exclude>WEB-INF/templates/result.html</exclude>
-                            </excludes>
                         </overlay>
                     </overlays>
                     <webXml>src/main/webapp/WEB-INF/web.xml</webXml>
-                    <webResources>
-                        <resource>
-                            <!-- this is relative to the pom.xml directory -->
-                            <directory>src/main/webapp/js</directory>
-                            <targetPath>js</targetPath>
-                            <includes>
-                                <include>RestfulTester.js</include>
-                            </includes>
-                        </resource>
-                        <resource>
-							<!-- this is relative to the pom.xml directory -->
-							<directory>src/main/webapp/WEB-INF/templates</directory>
-							<targetPath>WEB-INF/templates</targetPath>
-							<includes>
-								<include>tmpl-navbar-left.html</include>
-								<include>tmpl-navbar-top.html</include>
-                                <include>result.html</include>
-							</includes>
-                        </resource>
-                    </webResources>
                 </configuration>
             </plugin>
 
